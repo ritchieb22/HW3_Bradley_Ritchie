@@ -1,0 +1,92 @@
+---
+title: "HW3_Bradley_Ritchie"
+author: "Ritchie Bradley"
+date: "3/3/2022"
+output: html_document
+knit: (function(input_file, encoding) {
+  out_dir <- 'docs';
+  rmarkdown::render(input_file,
+ encoding=encoding,
+ output_file=file.path(dirname(input_file), out_dir, 'index.html'))})
+---
+
+**Buying a TN Home in 2020; Data by County**
+
+Home buying is for many a gateway to financial success. In recent months, however, prices have surged and supply has dwindled in many states. Compared to other states, Tennessee can be an attractive option because people pay zero income tax and it has a relatively low cost of living. Tennessee has seen an influx of people taking advantage of this combination. According to the 2020 Migration Trends study by [U-Haul](https://www.uhaul.com/Articles/About/2020-Migration-Trends-U-Haul-Ranks-50-States-By-Migration-Growth-22746/), Tennessee had the largest net gain of U-Haul trucks crossing its borders.     
+
+
+```{r, echo=FALSE, results='hide', warning=FALSE, message=FALSE}
+library(tidycensus)
+library(tidyverse)
+library(dplyr)
+library(viridis)
+library(ggthemes)
+library(sf)
+library(leaflet)
+library(mapview)
+library(rworldmap) 
+library(rgeos)
+library(tigris) 
+library(plotly)
+library(htmlwidgets)
+```
+
+```{r, echo=FALSE, results='hide', warning=FALSE, message=FALSE}
+tn_map <- counties("TN", cb=T)
+```
+
+Data from the [Tennessee Housing Development Agency](https://thda.org/research-reports/tennessee-housing-market/tennessee-home-sales-data) was formatted and used to take a brief look at the Tennessee housing market by county. Data considering both new and existing homes was used.  
+
+When examining a market for a state, it is important to get a feel for the market on a lower level. If you were buying a home in Tennessee in 2020, it would be worthwhile to take into account how many homes were sold in the county that you are looking to buy in to figure out what type of market that area has.
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+
+#setwd("E:/aColoState MAS Program Work/STAA 566/Blank Repository/HW3_Bradley_Ritchie/HW3_Bradley_Ritchie")
+tndat <- read.csv("TNHouse data 2020 Updated.csv")
+
+tndata <-left_join(tn_map, tndat, by=c("NAME"="County"))
+names(tndata)[6] <- "County"
+tnhome <- ggplot(tndata) + 
+  geom_sf(aes(fill=Homes, group = County), color="white") +
+  theme_void() + #removes lat and lon lines
+  theme(panel.grid.major = element_line(colour = 'transparent')) +
+   scale_fill_distiller(palette="Oranges", direction=1, name="Number of Homes Purchased") +
+  labs(title="2020 Homes Sold in Tennessee", caption="Source: Tennessee Housing Development Agency")
+
+ggplotly(tnhome)
+```
+
+Median price is a good way to consider how much money you may be looking at to get into a decent home in the county you are examining. It is less likely to be skewed by the really expensive homes in a given county.
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+options(scipen = 999) #disables scientific notation in R
+tnmedian <- ggplot(tndata) + 
+  geom_sf(aes(fill=Median, group=County), color="white") +
+  theme_void() + #removes lat and lon lines
+  theme(panel.grid.major = element_line(colour = 'transparent')) +
+  scale_fill_viridis(option="viridis", direction=-1, name="Median Value in $") +
+  labs(title="2020 Median Sale Price by County in Tennessee", caption="Source: Tennessee Housing Development Agency")
+tnmedian_pl <- ggplotly(tnmedian)
+tnmedian_pl
+```
+
+Average value is a pretty standard statistic to include. If there were a lot of homes sold in a given county, the average value might be a good way to find the "hotter" markets. Counties with a higher average value will tend to contain large cities where many businesses are based.
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+options(scipen = 999) #disables scientific notation in R
+tnaverage <- ggplot(tndata) + 
+  geom_sf(aes(fill=Average, group=County), color="white") +
+  theme_void() + #removes lat and lon lines
+  theme(panel.grid.major = element_line(colour = 'transparent')) +
+  scale_fill_viridis(option="plasma", direction=-1, name="Average Value in $") +
+  labs(title="2020 Average Sale Price by County in Tennessee", caption="Source: Tennessee Housing Development Agency")
+tnaverage <- ggplotly(tnaverage)
+tnaverage
+```
+
+Obviously, this is not an exhaustive look at the Tennessee housing market. If it were available, data from 2021 would provide a much more up to date look at the market and allow potential home buyers a better summary of market conditions. Data from both new and existing homes was combined, which may make more established markets appear undervalued. If further work were to be done, I would make a slider and add more yearly data in as well as make figures for both existing and new construction.
+
+
+
+Sources: 
+“2020 Home Sales: New and Existing Homes.” Tennessee Housing Development Agency, Tennessee Housing Development Agency, https://thda.org/research-reports/tennessee-housing-market/tennessee-home-sales-data. 
+
+Lockridge, Jeff, and Sebastien Reyes. “2020 Migration Trends: U-Haul Ranks 50 States by Migration Growth.” UHaul.com, 4 Jan. 2021, https://www.uhaul.com/Articles/About/2020-Migration-Trends-U-Haul-Ranks-50-States-By-Migration-Growth-22746/. 
